@@ -14,10 +14,12 @@ class RenderSliverStickyHeader extends RenderSliver with RenderSliverHelpers {
     RenderObject? header,
     RenderSliver? child,
     bool overlapsContent = false,
+    bool reverse = false,
     bool sticky = true,
     StickyHeaderController? controller,
   })  : _overlapsContent = overlapsContent,
         _sticky = sticky,
+        _reverse = reverse,
         _controller = controller {
     this.header = header as RenderBox?;
     this.child = child;
@@ -33,6 +35,15 @@ class RenderSliverStickyHeader extends RenderSliver with RenderSliverHelpers {
   set overlapsContent(bool value) {
     if (_overlapsContent == value) return;
     _overlapsContent = value;
+    markNeedsLayout();
+  }
+
+  bool get reverse => _reverse;
+  bool _reverse;
+
+  set reverse(bool value) {
+    if (_reverse == value) return;
+    _reverse = value;
     markNeedsLayout();
   }
 
@@ -145,6 +156,8 @@ class RenderSliverStickyHeader extends RenderSliver with RenderSliverHelpers {
     AxisDirection axisDirection = applyGrowthDirectionToAxisDirection(
         constraints.axisDirection, constraints.growthDirection);
 
+    if (reverse) axisDirection = flipAxisDirection(axisDirection);
+
     if (header != null) {
       header!.layout(
         BoxValueConstraints<SliverStickyHeaderState>(
@@ -219,18 +232,25 @@ class RenderSliverStickyHeader extends RenderSliver with RenderSliverHelpers {
 
       final SliverPhysicalParentData? childParentData =
           child!.parentData as SliverPhysicalParentData?;
+
+      final double childStartOffset =
+          reverse ? headerExtent : headerPaintExtent;
+
       switch (axisDirection) {
         case AxisDirection.up:
           childParentData!.paintOffset = Offset.zero;
           break;
         case AxisDirection.right:
           childParentData!.paintOffset = Offset(
-              calculatePaintOffset(constraints, from: 0.0, to: headerExtent),
+              calculatePaintOffset(constraints,
+                  from: 0.0, to: childStartOffset),
               0.0);
           break;
         case AxisDirection.down:
-          childParentData!.paintOffset = Offset(0.0,
-              calculatePaintOffset(constraints, from: 0.0, to: headerExtent));
+          childParentData!.paintOffset = Offset(
+              0.0,
+              calculatePaintOffset(constraints,
+                  from: 0.0, to: childStartOffset));
           break;
         case AxisDirection.left:
           childParentData!.paintOffset = Offset.zero;
